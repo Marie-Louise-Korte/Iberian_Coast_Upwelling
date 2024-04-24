@@ -42,21 +42,21 @@ def upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
 
     ## 2. Step
     # calculate upwelling index (based on Gomez-Gesteira et al. 2006 -> maybe find better/original ref)
-   
-    # I need the angle of the coast ... as this is a large scale process I will just go with the approximate angle 
-    # prehaps refine later
 
-    # constants (?) -> see if I can / need to adjust coast angle
     # assuming 0 degree angle (= 0 rads) as Portugues coast is pretty well aligned with stratigh south-north direction
-        # so I think there is an error Gomez... say that varphi is the unitarian vector pointing landward perpendicular to
-        # the coast but then they go and add pi/2 (i.e. 90°) to it so maybe it is unclear in how they describe it but I am
-        # going to set varphi = the angle of the coast (i.e. 0°)
-    varphi = 0  # angle of the unitary vector perpendicular to coast pointing landward (i.e. west-east -> 90° 
+    
+    # I need the angle of the coast ... as this is a large scale process I will just go with the approximate angle 
+        # prehaps refine later ->  I am calculating the UI fro 10°W so I will just stick with an approximation of the 
+        # portuguese coast that is perfectly meridional
+
+    # angle of the unitary vector perpendicular to coast pointing landward 
+        # (the angle of the unitarian vector is defined relative to 'x-axis' i.e. west-east -> 0°) 
+    varphi = 0   
     varphi_rad = varphi * (np.pi/180) 
     
     theta = np.pi/2 + varphi_rad #? why this step?
 
-    # -› positive UI values mean upwelling favourable conditions
+    # -np.sin (changes the sign of the output) -> positive UI values mean upwelling favourable conditions
     DS['upwelling_index'] = -np.sin(theta) * DS.ek_trans_u + np.cos(theta) * DS.ek_trans_v
     DS.upwelling_index.attrs.update({"name" : "upwelling index", 
                                      "info" : "positive values upwelling favourable \nassuming Portuguese coast at 0°", 
