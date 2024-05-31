@@ -131,7 +131,27 @@ def calc_meridional_mean(DS, variable = 'UI', min_lat = 37.012264, max_lat = 43.
     DS[f'{variable}_mean'].attrs.update({'info' : f'meridional mean at 10°W (-10°) between {min_lat}°N and {max_lat}°N'})
     
     return DS
+
+
+##################################################################################################################
+## mid-shelf mask ################################################################################################
+##################################################################################################################
+
+def add_mid_shelf(DS, mid_shelf_lat, mid_shelf_lon):
+    nearest_lat = (DS.lat.sel(lat = mid_shelf_lat, method = 'nearest').values)
+    nearest_lon = (DS.lon.sel(lon = mid_shelf_lon, method = 'nearest').values)
+    nearest_coords = np.array([nearest_lat, nearest_lon]).T
     
+    mid_shelf_mask = xr.DataArray(False, coords = DS.isel(time = 0).coords, dims = DS.isel(time = 0).dims).drop_vars('time').astype(bool)
+    
+    for i_lat, i_lon in nearest_coords:
+        mid_shelf_mask.loc[dict(lat=i_lat, lon=i_lon)] = True
+    
+    DS['mid_shelf'] = mid_shelf_mask
+
+    return DS
+
+
 ##################################################################################################################
 ## calculate land mask -> has become a bit redundant -> I am using the ERA5 land-sea mask now ####################
 ##################################################################################################################
