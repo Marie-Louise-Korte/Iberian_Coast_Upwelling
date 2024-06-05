@@ -1,0 +1,9 @@
+#!/bin/bash
+
+## Download ECCO2 data
+# to get what you need to put for password go here: https://ecco.jpl.nasa.gov/drive/
+# data: https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/
+# another more complicated way https://github.com/podaac/data-subscriber/blob/main/Downloader.md
+
+## SST
+wget -A "*.nc" https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/daily/SST/ --user=ise.korte --password=2Ggtem8KJMUBpQSWqo8 -r -nc -np -nH --cut-dirs=6 -P ../Data.nosync/ECCO2/ECCO2_SST
