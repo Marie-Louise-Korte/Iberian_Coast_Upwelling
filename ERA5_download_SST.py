@@ -32,7 +32,7 @@ def download_data(year, month):
         "workflow_name": "application"
     })
 
-    c.download(result, [f"../Data.nosync/ERA5/SST/SST_{year}_{int(month):02d}.nc"]) 
+    c.download(result, [f"../Data/ERA5/SST/SST_{year}_{int(month):02d}.nc"]) 
     print(f"{year}_{int(month):02d}")
 
 
@@ -43,63 +43,65 @@ def main():
     args = parser.parse_args()
 
     # define variables for download
-    YEARS = np.array(np.arange(1995, 2024, 1), dtype='str')
+    YEARS = np.array(np.arange(2000, 2024, 1), dtype='str')
     MONTHS = np.array(np.arange(1, 13, 1), dtype='str')
 
     with ProcessPoolExecutor(max_workers=args.workers) as executor:
+        # 1982-2023
         for year in YEARS:
             for month in MONTHS:
                     executor.submit(download_data, year, month)
+        ## also download 1981/12 and 2024/01
+        c = cdsapi.Client()
+        result = c.service("tool.toolbox.orchestrator.workflow",
+            params={ 
+                "realm": "user-apps",
+                "project": "app-c3s-daily-era5-statistics",
+                "version": "master",
+                "kwargs": {
+                    "dataset": "reanalysis-era5-single-levels",
+                    "product_type": "reanalysis",
+                    "variable": "sea_surface_temperature",
+                    "statistic": "daily_mean",
+                    "year": "1981",
+                    "month": "12",
+                    "time_zone": "UTC+00:00",
+                    "frequency": "1-hourly",
+                    "grid": "0.25/0.25",
+                    "area": {"lat": [35, 45], "lon": [-20, -5]} 
+                },
+                "workflow_name": "application"
+        })
+        c.download(result, [f"../Data/ERA5/SST/SST_1981_12.nc"]) 
+        print(f"1981_12")
+
+        c = cdsapi.Client()
+        result = c.service("tool.toolbox.orchestrator.workflow",
+            params={ 
+                "realm": "user-apps",
+                "project": "app-c3s-daily-era5-statistics",
+                "version": "master",
+                "kwargs": {
+                    "dataset": "reanalysis-era5-single-levels",
+                    "product_type": "reanalysis",
+                    "variable": "sea_surface_temperature",
+                    "statistic": "daily_mean",
+                    "year": "2024",
+                    "month": "1",
+                    "time_zone": "UTC+00:00",
+                    "frequency": "1-hourly",
+                    "grid": "0.25/0.25",
+                    "area": {"lat": [35, 45], "lon": [-20, -5]} 
+                },
+                "workflow_name": "application"
+        })
+        c.download(result, [f"../Data/ERA5/SST/SST_2024_01.nc"]) 
+        print(f"2024_01")
+
 
 if __name__ == "__main__":
     main()
 
-## also download 1981/12 and 2024/01
-c = cdsapi.Client()
-result = c.service("tool.toolbox.orchestrator.workflow",
-    params={ 
-        "realm": "user-apps",
-        "project": "app-c3s-daily-era5-statistics",
-        "version": "master",
-        "kwargs": {
-            "dataset": "reanalysis-era5-single-levels",
-            "product_type": "reanalysis",
-            "variable": "sea_surface_temperature",
-            "statistic": "daily_mean",
-            "year": "1981",
-            "month": "12",
-            "time_zone": "UTC+00:00",
-            "frequency": "1-hourly",
-            "grid": "0.25/0.25",
-            "area": {"lat": [35, 45], "lon": [-20, -5]} 
-        },
-        "workflow_name": "application"
-})
-c.download(result, [f"../Data.nosync/ERA5/SST/SST_1981_12.nc"]) 
-print(f"1981_12")
-
-c = cdsapi.Client()
-result = c.service("tool.toolbox.orchestrator.workflow",
-    params={ 
-        "realm": "user-apps",
-        "project": "app-c3s-daily-era5-statistics",
-        "version": "master",
-        "kwargs": {
-            "dataset": "reanalysis-era5-single-levels",
-            "product_type": "reanalysis",
-            "variable": "sea_surface_temperature",
-            "statistic": "daily_mean",
-            "year": "2024",
-            "month": "1",
-            "time_zone": "UTC+00:00",
-            "frequency": "1-hourly",
-            "grid": "0.25/0.25",
-            "area": {"lat": [35, 45], "lon": [-20, -5]} 
-        },
-        "workflow_name": "application"
-})
-c.download(result, [f"../Data.nosync/ERA5/SST/SST_2024_01.nc"]) 
-print(f"2024_01")
 
 
 
