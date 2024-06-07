@@ -5,5 +5,12 @@
 # data: https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/
 # another more complicated way https://github.com/podaac/data-subscriber/blob/main/Downloader.md
 
+## Save files
+# hard drive : /Volumes/Jamie/ECCO2/ECCO2_SST
+# local: ../Data.nosync/ECCO2/ECCO2_SST
+
 ## SST
-wget -A "*.nc" https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/daily/SST/ --user=ise.korte --password=2Ggtem8KJMUBpQSWqo8 -r -nc -np -nH --cut-dirs=6 -P ../Data.nosync/ECCO2/ECCO2_SST
+wget -A "*.nc" https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/daily/SST/ --user=ise.korte --password=2Ggtem8KJMUBpQSWqo8 -r -nc -np -nH --cut-dirs=6 -P /Volumes/Jamie/ECCO2/ECCO2_SST
+
+## SSH
+wget -A "*.nc" https://ecco.jpl.nasa.gov/drive/files/ECCO2/cube92_latlon_quart_90S90N/daily/SSH/ --user=ise.korte --password=2Ggtem8KJMUBpQSWqo8 -r -nc -np -nH --cut-dirs=6 -P /Volumes/Jamie/ECCO2/ECCO2_SSH
