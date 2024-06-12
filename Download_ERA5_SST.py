@@ -43,7 +43,7 @@ def main():
     args = parser.parse_args()
 
     # define variables for download
-    YEARS = np.array(np.arange(2000, 2024, 1), dtype='str')
+    YEARS = np.array(np.arange(1982, 2024, 1), dtype='str')
     MONTHS = np.array(np.arange(1, 13, 1), dtype='str')
 
     with ProcessPoolExecutor(max_workers=args.workers) as executor:
