@@ -1,0 +1,4 @@
+#!/bin/bash
+
+## Download CoRTAD data to hard drive /Volumes/Jamie/
+wget https://www.ncei.noaa.gov/data/oceans/cortad/Version6/cortadv6_FilledSST.nc -r -nc -np -nH --cut-dirs=4 -P /Volumes/Jamie/
