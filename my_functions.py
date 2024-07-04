@@ -8,7 +8,9 @@ from global_land_mask import globe
 ## calculate the upwelling Index #################################################################################
 ##################################################################################################################
 
-def calc_upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
+def calc_upwelling_index(Dataset, lat, lon, eastward_stress, northward_stress, near_shore = False, angles = None):
+    
+    DS = Dataset
     # this function adds the new variables it creates to the input dataset DS
     
     ## Admin
@@ -28,7 +30,7 @@ def calc_upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
     # create a cube with f -> to fit 
     DS_shape = eastward_stress.shape
     f_cube = np.ones(DS_shape)
-    for i in np.arange(0,41):
+    for i in np.arange(0, DS_shape[1]):
         f_cube[:,i,:] = f[i]
 
     # calculate depth integrated Ekman transport    
@@ -51,13 +53,13 @@ def calc_upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
     # assuming 0 degree angle (= 0 rads) as Portugues coast is pretty well aligned with stratigh south-north direction
     
     # I need the angle of the coast ... as this is a large scale process I will just go with the approximate angle 
-        # prehaps refine later ->  I am calculating the UI fro 10°W so I will just stick with an approximation of the 
+        # prehaps refine later ->  I am calculating the UI fro 10.5°W so I will just stick with an approximation of the 
         # portuguese coast that is perfectly meridional
 
     # angle of the unitary vector perpendicular to coast pointing landward 
         # (the angle of the unitarian vector is defined relative to 'x-axis' i.e. west-east -> 0°) 
-    varphi = 0   
-    varphi_rad = varphi * (np.pi/180) 
+    varphi = 0    # angle perpendicular to the coast pointing landward
+    varphi_rad = varphi * (np.pi/180) # turn into radians (technically irrelevant for 0 angle)
     
     theta = np.pi/2 + varphi_rad #? why this step?
 
@@ -66,6 +68,36 @@ def calc_upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
     DS.UI.attrs.update({"name" : "upwelling index", 
                                      "info" : "positive values upwelling favourable \nassuming Portuguese coast at 0°", 
                                      "ref" : "Gomez-Gesteira et al. 2006"})
+
+    ## 3. Step
+    # calculate the Ekman transport at right angle to the shore for the pixels closest to shore
+    
+    # create a mask for the near shore pixel
+    lats_len = DS.lat.shape[0]
+    lons_len = DS.lon.shape[0]
+    
+    mask = np.zeros((lats_len, lons_len), dtype = bool)
+    
+    for lats in np.arange(0, lats_len):
+        for value in eastward_stress.isel(time = 0, lat = lats).values:
+            #print(value)
+            if np.isnan(value):
+                break
+            last_valid = value
+        
+        mask[lats, :] = (eastward_stress.isel(time = 0, lat = lats) == last_valid).values
+         
+    DS['nsm'] = (('lat', 'lon'), mask)
+    DS.nsm.attrs.update({'Name' : 'Near shore mask', 'Info' : 'True where pixel is closest to shore'})
+
+    if near_shore:
+        angles = np.pi/2 + angles # same as theta above I add pi/2 (90°) to my angle pointing landward 
+        # calculate the Ekman transport at 90° to the coast (angles need to be in rad)
+        DS['UI_ns'] = -np.sin(angles) * DS.where(DS.nsm).ek_trans_u + np.cos(angles) * DS.where(DS.nsm).ek_trans_v
+        DS.UI_ns.attrs.update({"name" : "near shore upwelling index  (only pixel directly adjacent \nto the west coast of the Iberian Peninsula", 
+                                        "info" : "positive values upwelling favourable",
+                                        "deatils" : "\nEkman transport directe at 90° angle away from coast \nwith exact angle of coastline at each latitude"})
+        
     return DS
 
 
@@ -73,7 +105,9 @@ def calc_upwelling_index(DS, lat, lon, eastward_stress, northward_stress):
 ## add weekly index to my weekly resampled data & use index to assign month ######################################
 ##################################################################################################################
 
-def add_week_and_month(DS_weekly_mean):
+def add_week_and_month(Dataset_weekly_mean):
+    
+    DS_weekly_mean = Dataset_weekly_mean
     # creat an index for the weeks in the year, runs from 1 to 52 (53 some years) and then repeats
     DS_weekly_mean['week_of_year'] = DS_weekly_mean.time.dt.isocalendar().week
     DS_weekly_mean.week_of_year.attrs.update({'info' : 'index according to week of the year'})
@@ -108,8 +142,9 @@ def add_week_and_month(DS_weekly_mean):
 # create a summer subset, if I want to change my subset I can change the min and max week ########################
 ##################################################################################################################
 
-def subset_summer(DS_weekly_mean, min_week = 22, max_week = 39): 
+def subset_summer(Dataset_weekly_mean, min_week = 22, max_week = 39): 
 
+    DS_weekly_mean = Dataset_weekly_mean
     DS_weekly_mean = add_week_and_month(DS_weekly_mean)
     DS_new = DS_weekly_mean.where(((DS_weekly_mean.week_of_year >= min_week) & (DS_weekly_mean.week_of_year <= max_week)), drop = True)
     
@@ -120,8 +155,9 @@ def subset_summer(DS_weekly_mean, min_week = 22, max_week = 39):
 # calculate the meridional mean ##################################################################################
 ##################################################################################################################
 
-def calc_meridional_mean(DS, variable = 'UI', min_lat = 37.012264, max_lat = 43.844013, lon = -10):
+def calc_meridional_mean(Dataset, variable = 'UI', min_lat = 37, max_lat = 43.5, lon = None):
     
+    DS = Dataset
     var = DS[f'{variable}']
     
     # default match the extent of the coast to UI_SST (min 37.012264, max 43.844013)
@@ -137,7 +173,9 @@ def calc_meridional_mean(DS, variable = 'UI', min_lat = 37.012264, max_lat = 43.
 ## mid-shelf mask ################################################################################################
 ##################################################################################################################
 
-def add_mid_shelf(DS, mid_shelf_lat, mid_shelf_lon):
+def add_mid_shelf(Dataset, mid_shelf_lat, mid_shelf_lon):
+
+    DS = Dataset
     nearest_lat = (DS.lat.sel(lat = mid_shelf_lat, method = 'nearest').values)
     nearest_lon = (DS.lon.sel(lon = mid_shelf_lon, method = 'nearest').values)
     nearest_coords = np.array([nearest_lat, nearest_lon]).T
@@ -156,7 +194,9 @@ def add_mid_shelf(DS, mid_shelf_lat, mid_shelf_lon):
 ## calculate land mask -> has become a bit redundant -> I am using the ERA5 land-sea mask now ####################
 ##################################################################################################################
 
-def add_land_mask(DS):
+def add_land_mask(Dataset):
+
+    DS = Dataset
     lon_grid, lat_grid = np.meshgrid(DS.lon.values, DS.lat.values)
     land_mask = globe.is_land(lat_grid, lon_grid)                     # needs input with lat first then lon
     DS['land_mask'] = (('lat', 'lon'), land_mask)
