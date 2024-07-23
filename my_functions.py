@@ -155,7 +155,7 @@ def subset_summer(Dataset_weekly_mean, min_week = 22, max_week = 39):
 # calculate the meridional mean ##################################################################################
 ##################################################################################################################
 
-def calc_meridional_mean(Dataset, variable = 'UI', min_lat = 37.25, max_lat = 43.5, lon = None):
+def calc_meridional_mean(Dataset, variable = 'UI', min_lat = 37, max_lat = 43.5, lon = None):
     
     DS = Dataset
     var = DS[f'{variable}']
